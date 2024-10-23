@@ -66,4 +66,8 @@ CONSTRAINT fk_policy_id FOREIGN KEY (policy_id) REFERENCES policy (policy_id)
 );
 
 -- Display table
+<<<<<<< Updated upstream
 SELECT * FROM category
+=======
+SELECT * FROM category
+>>>>>>> Stashed changes
