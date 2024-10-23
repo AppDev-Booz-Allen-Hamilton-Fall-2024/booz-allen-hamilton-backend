@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using Duende.IdentityServer.Models;
+
 public static class IdentityServerConfig
 {
     public static IEnumerable<Client> Clients =>
