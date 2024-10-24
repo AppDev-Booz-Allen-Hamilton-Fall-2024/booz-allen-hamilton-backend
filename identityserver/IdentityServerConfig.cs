@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Duende.IdentityServer.Models;
+using Duende.IdentityServer;
 
 public static class IdentityServerConfig
 {
@@ -8,13 +9,11 @@ public static class IdentityServerConfig
         {
             new Client
             {
-                ClientId = "client_id",
+                ClientId = "express_app_12345",
                 AllowedGrantTypes = GrantTypes.ClientCredentials,
-                ClientSecrets =
-                {
-                    new Secret("client_secret".Sha256())
-                },
-                AllowedScopes = { "api1" }
+                RedirectUris = {"http://localhost:4000/auth/callback"},
+                AllowedScopes = { "openid", "profile", "email" },
+                RequireClientSecret = false
             }
         };
 
@@ -29,5 +28,19 @@ public static class IdentityServerConfig
         {
             new IdentityResources.OpenId(),
             new IdentityResources.Profile()
+        };
+
+    public static IEnumerable<ExternalProvider> GetExternalProviders() =>
+        new List<ExternalProvider>
+        {
+            new ExternalProvider
+            {
+                DisplayName = "Okta",
+                AuthenticationScheme = "okta", // Name for the scheme
+                Authority = "https://dev-64890073.okta.com", // Okta domain
+                ClientId = "0oakfcc507HIMlLpw5d7",
+                ClientSecret = "9SLd0wFQ7AWqN_e4URqVRvL6H7Zm4K3MRLaQqgkSoenfaJGZIrfi8nd0HZ_S9Ahg",
+                CallbackPath = "/auth/callback" // Relative path for your IdentityServer to receive the callback
+            }
         };
 }
