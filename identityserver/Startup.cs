@@ -27,10 +27,10 @@ public class Startup
         services.AddAuthentication()
             .AddOpenIdConnect("okta", "Okta", options =>
             {
-                options.Authority = Environment.GetEnvironmentVariable("AUTHORITY") ?? "https://dev-64890073.okta.com/oauth2/default";
+                options.Authority = "https://dev-64890073.okta.com/oauth2/v1/authorize?response_type=code&response_mode=query&client_id=okta.b58d5b75-07d4-5f25-bf59-368a1261a405&redirect_uri=https%3A%2F%2Fdev-64890073-admin.okta.com%2Fadmin%2Fsso%2Fcallback&scope=openid&state=v97h7svvV7RP_wfEAkM6wynJApTIEpLE&nonce=Z2HPAEpUW6gh1iFCBXQuJwanCZaP_jzZ&code_challenge=oBUtXqG8mFGNoMb0A9ZWgKaRbW_dlSuB9L_tMzzOdgM&code_challenge_method=S256";
                 options.ClientId = Environment.GetEnvironmentVariable("CLIENT_ID") ?? "0oakfcc507HIMlLpw5d7";
                 options.ClientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET") ?? "9SLd0wFQ7AWqN_e4URqVRvL6H7Zm4K3MRLaQqgkSoenfaJGZIrfi8nd0HZ_S9Ahg";
-                options.CallbackPath = Environment.GetEnvironmentVariable("CALLBACK_PATH") ?? "/auth/callback";
+                options.CallbackPath = Environment.GetEnvironmentVariable("CALLBACK_PATH") ?? "https://localhost:4000/auth/callback";
                 options.ResponseType = "code";
                 options.SaveTokens = true;
                 options.Scope.Add("openid");

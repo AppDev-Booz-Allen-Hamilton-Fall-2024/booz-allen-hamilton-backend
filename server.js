@@ -3,6 +3,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
+const passport = require('passport');
 require('dotenv').config({ path: './backend/.env' });
 
 const app = express();
