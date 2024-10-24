@@ -5,21 +5,25 @@ using Microsoft.AspNetCore.Mvc;
 public class AccountController : Controller
 {
     [HttpGet]
-    public IActionResult Login(string returnUrl)
+    public IActionResult Login()
     {
-    var properties = new AuthenticationProperties { RedirectUri = returnUrl ?? "http://localhost:3000/upload-policies" };
+        var properties = new AuthenticationProperties 
+        { 
+            RedirectUri = "http://localhost:4000/auth/callback"
+        };
+        
         return Challenge(properties, "okta");
     }
 
     [HttpGet]
-    public IActionResult Callback(string returnUrl)
+    public IActionResult Callback()
     {
-        return LocalRedirect(returnUrl);
+        return LocalRedirect("http://localhost:4000/auth/callback"); 
     }
 
     [HttpPost]
     public IActionResult Logout()
     {
-        return SignOut(new AuthenticationProperties { RedirectUri = "/" }, CookieAuthenticationDefaults.AuthenticationScheme, "okta");
+        return SignOut(new AuthenticationProperties { RedirectUri = "http://localhost:4000" }, CookieAuthenticationDefaults.AuthenticationScheme, "okta");
     }
 }
