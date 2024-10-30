@@ -4,7 +4,7 @@ require('dotenv').config({ path: './booz-allen-hamilton-backend/.env' }); // Cor
 
 // Configure Passport with Okta OAuth2 using environment variables
 passport.use(new OAuth2Strategy({
-  authorizationURL: process.env.AUTHORITY + '/account/login',  // Okta authorization URL
+  authorizationURL: process.env.AUTHORITY + '/connect/authorize',  // Okta authorization URL
   tokenURL: process.env.AUTHORITY + '/oauth2/default/v1/token',              // Okta token URL
   clientID: process.env.CLIENT_ID,                            // Okta client ID
   clientSecret: process.env.CLIENT_SECRET,                    // Okta client secret
