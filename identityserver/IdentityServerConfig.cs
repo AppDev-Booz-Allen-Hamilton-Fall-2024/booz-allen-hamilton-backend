@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Duende.IdentityServer.Models;
+using Duende.IdentityServer;
 
 namespace System
 {

@@ -1,6 +1,6 @@
-const passport = require('passport');
-const OAuth2Strategy = require('passport-oauth2').Strategy;
-require('dotenv').config({ path: './booz-allen-hamilton-backend/.env' }); // Corrected path to .env
+const passport = require("passport");
+const OAuth2Strategy = require("passport-oauth2").Strategy;
+require("dotenv").config({ path: "./booz-allen-hamilton-backend/.env" }); // Corrected path to .env
 
 // Configure Passport with Okta OAuth2 using environment variables
 passport.use(new OAuth2Strategy({
@@ -23,20 +23,24 @@ passport.deserializeUser(function (obj, done) {
 
 module.exports = function (app) {
   // OAuth2 login route
-  app.get('/auth/okta', passport.authenticate('oauth2'));
+  app.get("/auth/okta", passport.authenticate("oauth2"));
 
   // OAuth2 callback route
-  app.get('/auth/callback', passport.authenticate('oauth2', { failureRedirect: '/' }), (req, res) => {
-    // Store token and redirect after successful authentication
-    res.cookie('access_token', req.user.accessToken);
-    res.redirect('/dashboard');
-  });
+  app.get(
+    "/auth/callback",
+    passport.authenticate("oauth2", { failureRedirect: "/" }),
+    (req, res) => {
+      // Store token and redirect after successful authentication
+      res.cookie("access_token", req.user.accessToken);
+      res.redirect("/dashboard");
+    }
+  );
 
   // Protected dashboard route
-  app.get('/dashboard', (req, res) => {
+  app.get("/dashboard", (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.redirect('https://localhost:3000/upload-policies');
+      return res.redirect("https://localhost:3000/upload-policies");
     }
-    res.send('Welcome to the dashboard!');
+    res.send("Welcome to the dashboard!");
   });
 };
