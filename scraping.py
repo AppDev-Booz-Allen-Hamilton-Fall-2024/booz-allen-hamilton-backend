@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from tqdm import tqdm
 from fpdf import FPDF
-p = "/Users/rohan/booz_allen/booz-allen-hamilton-backend/policies/TX"
+p = "/Users/rohan/booz_allen/booz-allen-hamilton-backend/policies/IA"
 if not os.path.isdir(p):
     os.mkdir(p)
 head = {
@@ -25,10 +25,7 @@ def find_policy_links(url, soup):
         href = a_tag['href']
         if any(href.lower().endswith(ext) for ext in extensions):
             full_url = urljoin(url, href)
-            # if '.' in href:
-            #     refs.append(href)
             links.append(full_url)
-    # print("a_tag:", refs)
     return links
 def download_file(url, download_dir):
     local_filename = os.path.join(download_dir, url.split('/')[-1])
@@ -45,7 +42,6 @@ def find_chapter_links(url, soup):
         href = a_tag['href']
         full_url = urljoin(url, href)
         links.append(full_url)
-    print("LINKS:", len(links))
     return links
 def find_subchapter_links(url, soup):
     links = []
@@ -53,43 +49,71 @@ def find_subchapter_links(url, soup):
         href = a_tag['href']
         full_url = urljoin(url, href)
         links.append(full_url)
-    print("SUBS:", len(links))
+    return links
+def find_section_links(url, soup):
+    links = []
+    for a_tag in soup.find_all('a', href=True, attrs={'name': "Section 249A.1"}):
+        href = a_tag['href']
+        full_url = urljoin(url, href)
+        links.append(full_url)
     return links
 def scrape_text_to_pdf(url, download_dir, head):
     main_soup = get_soup(url)
     chapter_links = find_chapter_links(url, main_soup)
-    count = 0
-    for link in chapter_links:
-        chapter_soup = get_soup(link)
-        text = chapter_soup.get_text()
-        chapter_title = chapter_soup.title.string.strip().replace(' ', '_').replace('/', '_')
-        subchapter_links = find_subchapter_links(link, chapter_soup)
-        
-        for subchapter_link in subchapter_links:
-            subchapter_soup = get_soup(subchapter_link)
-            text = subchapter_soup.get_text()
-            subchapter_title = subchapter_soup.title.string.strip().replace(' ', '_').replace('/', '_')
+    if len(chapter_links) != 0:
+        count = 0
+        for link in chapter_links:
+            chapter_soup = get_soup(link)
+            text = chapter_soup.get_text()
+            chapter_title = chapter_soup.title.string.strip().replace(' ', '_').replace('/', '_')
+            subchapter_links = find_subchapter_links(link, chapter_soup)
             
+            for subchapter_link in subchapter_links:
+                subchapter_soup = get_soup(subchapter_link)
+                text = subchapter_soup.get_text()
+                subchapter_title = subchapter_soup.title.string.strip().replace(' ', '_').replace('/', '_')
+                print("SUBTITLE:", subchapter_title)
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_auto_page_break(auto=True, margin=15)
+                pdf.set_font("Arial", size=12)
+                for line in text.split('\n'):
+                    if line.strip(): 
+                        pdf.multi_cell(0, 10, line)
+                
+                pdf_filename = os.path.join(download_dir, f"{chapter_title}_{subchapter_title}_{count}.pdf")
+                count += 1
+                pdf.output(pdf_filename)
+                print(f"Saved PDF: {pdf_filename}")
+    else:
+        section_links = find_section_links(url, main_soup)
+        print("SECTION LINKS:", len(section_links))
+        count = 0
+        for link in section_links:
+            section_soup = get_soup(link)
+            text = section_soup.get_text()
+            section_title = section_soup.title.string.strip().replace(' ', '_').replace('/', '_')
+            print("SECTION TITLE:", section_title)
             pdf = FPDF()
             pdf.add_page()
             pdf.set_auto_page_break(auto=True, margin=15)
             pdf.set_font("Arial", size=12)
             for line in text.split('\n'):
-                if line.strip():  # Skip empty lines
+                if line.strip(): 
                     pdf.multi_cell(0, 10, line)
             
-            pdf_filename = os.path.join(download_dir, f"{chapter_title}_{subchapter_title}_{count}.pdf")
+            pdf_filename = os.path.join(download_dir, f"{section_title}_{count}.pdf")
             count += 1
             pdf.output(pdf_filename)
             print(f"Saved PDF: {pdf_filename}")
 def main():
-    soup = get_soup("https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC?tac_view=3&ti=1&pt=15")
-    links = find_policy_links("https://texreg.sos.state.tx.us", soup)
+    soup = get_soup("https://www.legis.iowa.gov/publications/search?tab=true&rows=10&start=0&sort=lbl%20desc%2Csn%20asc%2Cname%20asc&q=&fq=-status%3A%22Reserved%22%20AND%20-status%3A%22Repealed%22%20AND%20-status%3A%22Rescinded%22&fq=(l5%3A%22law%3A1code%3A1476%3A06%3A0006%3A00249A-1388805%7CCHAPTER%20249A%20MEDICAL%20ASSISTANCE%22)")
+    links = find_policy_links("https://www.legis.iowa.gov", soup)
     if links:
         for link in links:
             download_file(link, p)
     else:
-        scrape_text_to_pdf("https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC?tac_view=3&ti=1&pt=15", p, head)
+        scrape_text_to_pdf("https://www.legis.iowa.gov/publications/search?tab=true&rows=10&start=0&sort=lbl%20desc%2Csn%20asc%2Cname%20asc&q=&fq=-status%3A%22Reserved%22%20AND%20-status%3A%22Repealed%22%20AND%20-status%3A%22Rescinded%22&fq=(l5%3A%22law%3A1code%3A1476%3A06%3A0006%3A00249A-1388805%7CCHAPTER%20249A%20MEDICAL%20ASSISTANCE%22)", p, head)
 
 
     # try:
