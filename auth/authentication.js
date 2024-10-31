@@ -6,10 +6,14 @@ passport.use(
   new OAuth2Strategy(
     {
       clientID: "0oakrzr2ze9ChsWBy5d7",
-      authorizationURL: "https://dev-34090874.okta.com",
-      tokenURL: process.env.AUTHORITY + "/connect/token",
-      clientSecret: process.env.CLIENT_SECRET,
-      callbackURL: process.env.CALLBACK_PATH,
+      authorizationURL:
+        "https://dev-34090874.okta.com/oauth2/default/v1/authorize",
+      tokenURL: "https://dev-34090874.okta.com/oauth2/default/v1/token",
+      clientSecret:
+        "13HX0xBim9AqLcbL25DY5aTwRctt2dNm-lJ0mq9fNkq4Ktlb9WCldrenzTcEpD8b",
+      callbackURL: "http://localhost:4000/auth/callback",
+      scope: ["openid", "profile", "email"],
+      state: true,
     },
     function (accessToken, refreshToken, profile, done) {
       return done(null, { profile, accessToken });
@@ -43,7 +47,7 @@ module.exports = function (app) {
   // Protected dashboard route
   app.get("/dashboard", (req, res) => {
     if (req.isAuthenticated()) {
-      return res.redirect("https://localhost:3000/upload-policies");
+      return res.redirect("http://localhost:3000/upload-policies");
     }
     res.send("Welcome to the dashboard!");
   });
