@@ -9,6 +9,7 @@ public class Startup
 {
     public void ConfigureServices(IServiceCollection services)
     {
+        Console.WriteLine("BOOZ ALLEN!");
         services.AddControllersWithViews();
 
         // Configure Duende IdentityServer
@@ -24,6 +25,7 @@ public class Startup
         .AddInMemoryApiScopes(IdentityServerConfig.ApiScopes)
         .AddInMemoryIdentityResources(IdentityServerConfig.IdentityResources);
 
+<<<<<<< HEAD
         // Add external authentication (Okta)
         services.AddAuthentication(options =>
     {
@@ -36,6 +38,16 @@ public class Startup
                 options.ClientId = Environment.GetEnvironmentVariable("CLIENT_ID") ?? "0oakfcc507HIMlLpw5d7";
                 options.ClientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET") ?? "9SLd0wFQ7AWqN_e4URqVRvL6H7Zm4K3MRLaQqgkSoenfaJGZIrfi8nd0HZ_S9Ahg";
                 options.CallbackPath = Environment.GetEnvironmentVariable("CALLBACK_PATH") ?? "http://localhost:4000/auth/callback";
+=======
+        // Add external authentication (Okta) CHANGE ALL VARS TO ENV
+        services.AddAuthentication()
+            .AddOpenIdConnect("okta", "Okta", options =>
+            {
+                options.Authority = "https://dev-64890073.okta.com";
+                options.ClientId = "0oakfcc507HIMlLpw5d7";
+                options.ClientSecret = "9SLd0wFQ7AWqN_e4URqVRvL6H7Zm4K3MRLaQqgkSoenfaJGZIrfi8nd0HZ_S9Ahg";
+                options.CallbackPath = "https://localhost:4000/auth/callback";
+>>>>>>> 24bf30f4d2e45b30b56f7e29ff13dd776fa696c2
                 options.ResponseType = "code";
                 options.SaveTokens = true;
                 options.Scope.Add("openid");
@@ -46,6 +58,7 @@ public class Startup
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
+        Console.WriteLine("BOOZ ALLEN!");
         if (env.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
@@ -56,7 +69,7 @@ public class Startup
             app.UseHsts();
         }
 
-        app.UseHttpsRedirection();
+        //app.UseHttpsRedirection();
         app.UseStaticFiles();
         
         app.UseIdentityServer();
