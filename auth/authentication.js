@@ -1,16 +1,15 @@
 const passport = require("passport");
 const OAuth2Strategy = require("passport-oauth2").Strategy;
-require("dotenv").config({ path: "./booz-allen-hamilton-backend/.env" }); // Corrected path to .env
+require("dotenv").config({ path: "./booz-allen-hamilton-backend/.env" });
 
-// Configure Passport with Okta OAuth2 using environment variables
 passport.use(
   new OAuth2Strategy(
     {
-      authorizationURL: process.env.AUTHORITY + "/connect/authorize", // Okta authorization URL
-      tokenURL: process.env.AUTHORITY + "/oauth2/default/v1/token", // Okta token URL
-      clientID: process.env.CLIENT_ID, // Okta client ID
-      clientSecret: process.env.CLIENT_SECRET, // Okta client secret
-      callbackURL: process.env.CALLBACK_PATH, // Callback URL
+      clientID: "0oakrzr2ze9ChsWBy5d7",
+      authorizationURL: "https://dev-34090874.okta.com",
+      tokenURL: process.env.AUTHORITY + "/connect/token",
+      clientSecret: process.env.CLIENT_SECRET,
+      callbackURL: process.env.CALLBACK_PATH,
     },
     function (accessToken, refreshToken, profile, done) {
       return done(null, { profile, accessToken });
@@ -43,7 +42,7 @@ module.exports = function (app) {
 
   // Protected dashboard route
   app.get("/dashboard", (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (req.isAuthenticated()) {
       return res.redirect("https://localhost:3000/upload-policies");
     }
     res.send("Welcome to the dashboard!");

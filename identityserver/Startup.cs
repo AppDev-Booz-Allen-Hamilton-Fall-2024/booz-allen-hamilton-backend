@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using System;
 
 public class Startup
@@ -24,13 +25,17 @@ public class Startup
         .AddInMemoryIdentityResources(IdentityServerConfig.IdentityResources);
 
         // Add external authentication (Okta)
-        services.AddAuthentication()
+        services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = "okta";
+    })
             .AddOpenIdConnect("okta", "Okta", options =>
             {
-                options.Authority = "https://dev-64890073.okta.com";
+                options.Authority = Environment.GetEnvironmentVariable("AUTHORITY") ?? "https://dev-64890073.okta.com";
                 options.ClientId = Environment.GetEnvironmentVariable("CLIENT_ID") ?? "0oakfcc507HIMlLpw5d7";
                 options.ClientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET") ?? "9SLd0wFQ7AWqN_e4URqVRvL6H7Zm4K3MRLaQqgkSoenfaJGZIrfi8nd0HZ_S9Ahg";
-                options.CallbackPath = "https://localhost:4000/auth/callback";
+                options.CallbackPath = Environment.GetEnvironmentVariable("CALLBACK_PATH") ?? "http://localhost:4000/auth/callback";
                 options.ResponseType = "code";
                 options.SaveTokens = true;
                 options.Scope.Add("openid");
@@ -55,13 +60,16 @@ public class Startup
         app.UseStaticFiles();
         
         app.UseIdentityServer();
+
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
 
         app.UseEndpoints(endpoints =>
         {
-            endpoints.MapDefaultControllerRoute();
+            endpoints.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
         });
     }
 }
