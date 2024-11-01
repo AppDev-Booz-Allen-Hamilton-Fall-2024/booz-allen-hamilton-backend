@@ -1,27 +1,34 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const session = require('express-session');
-const cookieParser = require('cookie-parser');
-const passport = require('passport');
-require('dotenv').config({ path: './backend/.env' });
+const session = require("express-session");
+const cookieParser = require("cookie-parser");
+const passport = require("passport");
+require("dotenv").config({ path: "./backend/.env" });
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Frontend origin
+    credentials: true, // Allow cookies and other credentials
+  })
+);
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use(session({
-  secret: 'your_session_secret',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false } // In production, set secure: true with HTTPS
-}));
+app.use(
+  session({
+    secret: "your_session_secret",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }, // In production, set secure: true with HTTPS
+  })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 
-require('./auth/authentication')(app);
+require("./auth/authentication")(app);
 
 app.get("/", (req, res) => {
   res.send("Hello from Express!");

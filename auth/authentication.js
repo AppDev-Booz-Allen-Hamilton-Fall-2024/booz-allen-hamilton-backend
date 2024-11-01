@@ -38,8 +38,10 @@ module.exports = function (app) {
     "/auth/callback",
     passport.authenticate("oauth2", { failureRedirect: "/" }),
     (req, res) => {
-      // Store token and redirect after successful authentication
-      res.cookie("access_token", req.user.accessToken);
+      res.cookie("access_token", req.user.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+      });
       res.redirect("/dashboard");
     }
   );
