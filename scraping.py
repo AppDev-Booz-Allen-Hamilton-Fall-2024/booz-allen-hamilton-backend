@@ -60,6 +60,7 @@ def find_section_links(url, soup):
 def scrape_text_to_pdf(url, download_dir, head):
     main_soup = get_soup(url)
     chapter_links = find_chapter_links(url, main_soup)
+    lst = []
     if len(chapter_links) != 0:
         count = 0
         for link in chapter_links:
@@ -84,7 +85,7 @@ def scrape_text_to_pdf(url, download_dir, head):
                 pdf_filename = os.path.join(download_dir, f"{chapter_title}_{subchapter_title}_{count}.pdf")
                 count += 1
                 pdf.output(pdf_filename)
-                print(f"Saved PDF: {pdf_filename}")
+                lst.append(pdf_filename) 
     else:
         section_links = find_section_links(url, main_soup)
         print("SECTION LINKS:", len(section_links))
@@ -105,15 +106,18 @@ def scrape_text_to_pdf(url, download_dir, head):
             pdf_filename = os.path.join(download_dir, f"{section_title}_{count}.pdf")
             count += 1
             pdf.output(pdf_filename)
-            print(f"Saved PDF: {pdf_filename}")
-def main():
+            lst.append(pdf_filename)
+        return lst
+def scraper():
     soup = get_soup("https://www.legis.iowa.gov/publications/search?tab=true&rows=10&start=0&sort=lbl%20desc%2Csn%20asc%2Cname%20asc&q=&fq=-status%3A%22Reserved%22%20AND%20-status%3A%22Repealed%22%20AND%20-status%3A%22Rescinded%22&fq=(l5%3A%22law%3A1code%3A1476%3A06%3A0006%3A00249A-1388805%7CCHAPTER%20249A%20MEDICAL%20ASSISTANCE%22)")
     links = find_policy_links("https://www.legis.iowa.gov", soup)
     if links:
+        lst = []
         for link in links:
-            download_file(link, p)
+            lst.append(download_file(link, p))
+        return lst
     else:
-        scrape_text_to_pdf("https://www.legis.iowa.gov/publications/search?tab=true&rows=10&start=0&sort=lbl%20desc%2Csn%20asc%2Cname%20asc&q=&fq=-status%3A%22Reserved%22%20AND%20-status%3A%22Repealed%22%20AND%20-status%3A%22Rescinded%22&fq=(l5%3A%22law%3A1code%3A1476%3A06%3A0006%3A00249A-1388805%7CCHAPTER%20249A%20MEDICAL%20ASSISTANCE%22)", p, head)
+        return scrape_text_to_pdf("https://www.legis.iowa.gov/publications/search?tab=true&rows=10&start=0&sort=lbl%20desc%2Csn%20asc%2Cname%20asc&q=&fq=-status%3A%22Reserved%22%20AND%20-status%3A%22Repealed%22%20AND%20-status%3A%22Rescinded%22&fq=(l5%3A%22law%3A1code%3A1476%3A06%3A0006%3A00249A-1388805%7CCHAPTER%20249A%20MEDICAL%20ASSISTANCE%22)", p, head)
 
 
     # try:
@@ -139,7 +143,4 @@ def main():
     
     # except Exception as e:
     #     print(f"{e}")
-
-if __name__ == "__main__":
-    main()
 

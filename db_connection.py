@@ -1,7 +1,14 @@
 # This file establishes a connection for the PostgreSQL database
 
-# Import package
+# Import package, on terminal: pip3 install psycopg2-binary
 import psycopg2
+# returns a string
+from categorize import categories
+# returns a LARGE string
+from summarize import summary
+# returns a list
+from ner import keyword
+from scraping import scraper
 
 # conn stores the connection to the local database
 conn = psycopg2.connect(database = "adc", 
