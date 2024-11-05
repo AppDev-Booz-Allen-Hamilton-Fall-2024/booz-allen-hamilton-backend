@@ -17,10 +17,10 @@ cur = conn.cursor()
 
 # There are three funcitons that occur when a file is uploaded:
 # 1) Summarize
-# 2) Key Word Extraction
+# 2) Key Word Extraction (ner)
 # 3) Category
-# We need to store the result of these function for every uploaded file in the database
-# To do this, we need to import filed
+# We need to store the result of these functions for every uploaded file in the database
+# To do this, we need to import file
 
 # File paths first
 # Upload and Web Scraped 
