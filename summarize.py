@@ -28,23 +28,15 @@ def split_text(text, max_chunk_size = 200):
         chunks.append(current_chunk.strip())
     return chunks
 
-def summary(doc_1, doc_2):
+def summary(doc_1):
     text_1 = extract_text(doc_1)
-    text_2 = extract_text(doc_2)
-    lst = [text_1, text_2]
-    finals = []
-    for i in range(len(lst)):
-        chunks = split_text(lst[i])
-        summaries = []
-        for chunk in chunks:
-            summary = summarize(chunk)
-            summary.replace("summarize: ", "")
-            summaries.append(summary)
-        final_summary = ' '.join(summaries)
-        finals.append(final_summary)
-    for i in range(len(finals)):
-        print(f'Summary {i+1}:')
-        finals[i].replace("summarize: ", "")
-        wrapped_text = textwrap.fill(finals[i], width=120)
-        print(wrapped_text)
-        print()
+    chunks = split_text(text_1)
+    summaries = []
+    for chunk in chunks:
+        summary = summarize(chunk)
+        summary.replace("summarize: ", "")
+        summaries.append(summary)
+    final_summary = ' '.join(summaries)
+    final_summary.replace("summarize: ", "")
+    wrapped_text = textwrap.fill(final_summary, width=120)
+    return wrapped_text
