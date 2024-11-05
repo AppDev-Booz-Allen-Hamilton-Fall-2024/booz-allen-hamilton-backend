@@ -1,6 +1,7 @@
 from gliner import GLiNER
 import pandas as pd
 from pdfminer.high_level import extract_text
+import math
 model_name = "urchade/gliner_mediumv2.1"
 model = GLiNER.from_pretrained(model_name)
 model.eval()
@@ -18,5 +19,6 @@ def keyword(doc):
         keywords.append(df[df['label'] == 'state'].max()['text'])
     else:
         keywords = filtered_df['text'].head(5).to_list()
-        clean = [keyword.replace('\n\n', ' ') for keyword in keywords]
+    keywords = [x for x in keywords if not (isinstance(x, float) and math.isnan(x))]
+    clean = [keyword.replace('\n\n', ' ') for keyword in keywords]
     return clean
