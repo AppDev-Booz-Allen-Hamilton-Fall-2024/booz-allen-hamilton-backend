@@ -42,26 +42,40 @@ cur = conn.cursor()
 
 # Store file path
 lst = scraper("https://www.pacodeandbulletin.gov/Display/pacode?titleNumber=055&file=/secure/pacode/data/055/055toc.html&searchunitkeywords=&operator=OR&title=null", "https://www.pacodeandbulletin.gov")
-count = 1
-for filename in lst:
-    # Add filename to database inside ***
-    # Make cur.execute if statement to make sure that duplicates aren't added ***
 
-    #sum = summary(filename)
-    #cats = categories(filename)
-    #keywords = keyword(filename)
+# Go through every file_path in the lst
+for file_path in lst:
+    # Check for duplicates by counting existing records with the same file_path
+    cur.execute("SELECT policy_id FROM policy WHERE og_file_path = %s", (file_path,))
+    result = cur.fetchone()
+    remove_this = 1
+    
+    if result:
+        # If the file_path exists, get the existing policy_id
+        policy_id = result[0]
+    else:
+        # If the file_path does not exist, insert it and retrieve the new policy_id
+        cur.execute("INSERT INTO policy (og_file_path) VALUES (%s) RETURNING policy_id", (file_path,))
+        policy_id = cur.fetchone()[0]
 
-    # Add sum, categories, and keywords ****
+        # Cats and keywords stores an array
+        cats = categories(file_path) 
+        keywords = keyword(file_path) 
 
-    # Add file
-     # Check for duplicates
-    cur.execute("SELECT COUNT(*) FROM policy WHERE policy_name = %s", (filename,))
-    if cur.fetchone()[0] == 0:
-        cur.execute("INSERT INTO policy (policy_id, policy_name) VALUES (%s, %s)", (count, filename))
-        count += 1
-
-    # instead of using count to number the policy_id, use the SQL method (indexing) that
-    # automatically adds 
+        # Sum stores a big string
+        sum = summary(file_path)
+            
+        # Loop through array of keywords
+        for k in keywords:
+            # Insert keyword
+            cur.execute("INSERT INTO keyword (policy_id, keyword) VALUES (%s, %s)", (policy_id, k))
+        # Insert categories
+        for c in cats:
+            # Insert category
+            cur.execute("INSERT INTO category (policy_id, category) VALUES (%s, %s)", (policy_id, c))
+        if remove_this == 1:
+            cur.execute("INSERT INTO policy (policy_id, summary) VALUES (%s, %s)", (policy_id, sum))
+            remove_this = remove_this + 1
 
 # Make the changes to the database persistent
 conn.commit()
