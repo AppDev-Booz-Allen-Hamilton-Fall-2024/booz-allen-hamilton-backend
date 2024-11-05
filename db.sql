@@ -10,21 +10,23 @@ VALUES ('AL'), ('AK'), ('AZ'), ('AR'), ('CA'), ('CO'), ('CT'), ('DE'), ('FL'), (
 ('HI'), ('ID'), ('IL'), ('IN'), ('IA'), ('KS'), ('KY'), ('LA'), ('ME'), ('MD'),
 ('MA'), ('MI'), ('MN'), ('MS'), ('MO'), ('MT'), ('NE'), ('NV'), ('NH'), ('NJ'),
 ('NM'), ('NY'), ('NC'), ('ND'), ('OH'), ('OK'), ('OR'), ('PA'), ('RI'), ('SC'),
-('SD'), ('TN'), ('TX'), ('UT'), ('VT'), ('VA'), ('WA'), ('WV'), ('WI'), ('WY');
+('SD'), ('TN'), ('TX'), ('UT'), ('VT'), ('VA'), ('WA'), ('WV'), ('WI'), ('WY'), ('DC');
 
 -- Display table
 SELECT * FROM "state";
 
 -- Create table called policy to store information about the policy
 CREATE TABLE policy(
-policy_id INT primary key,
-policy_name VARCHAR(50),
+-- policy_id is automatically generated when a new policy is added
+policy_id SERIAL primary key,
+policy_name VARCHAR(100),
 effective_date DATE,
 expiration_date DATE,
-summary VARCHAR(300),
+summary VARCHAR(8000),
 created_when DATE,
 updated_when DATE,
-file_path VARCHAR(100),
+og_file_path VARCHAR(250),
+annotated_file_path VARCHAR(260),
 
 -- Make fk columns
 state_name VARCHAR(2),
@@ -42,19 +44,19 @@ ADD CONSTRAINT fk_prev_policy_id FOREIGN KEY (prev_policy_id) REFERENCES policy 
 ADD CONSTRAINT fk_next_policy_id FOREIGN KEY (next_policy_id) REFERENCES policy (policy_id);
 
 -- Display table
-SELECT * FROM policy
+SELECT * FROM policy;
 
 -- Create table called keyword that stores all of the keywords associated
 -- with a policy
 CREATE TABLE keyword(
 policy_id INT,
-keyword VARCHAR(30),
+keyword VARCHAR(100),
 -- create a fk for policy_id that points to policy_id of the policy table
 CONSTRAINT fk_policy_id FOREIGN KEY (policy_id) REFERENCES policy (policy_id)
 );
 
 -- Display table
-SELECT * FROM keyword
+SELECT * FROM keyword;
 
 -- Create table called category that stores all of the categories associated
 -- with a policy
@@ -66,4 +68,4 @@ CONSTRAINT fk_policy_id FOREIGN KEY (policy_id) REFERENCES policy (policy_id)
 );
 
 -- Display table
-SELECT * FROM category
+SELECT * FROM category;
