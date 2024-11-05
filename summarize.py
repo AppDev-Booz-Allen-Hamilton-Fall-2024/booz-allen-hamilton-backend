@@ -5,9 +5,9 @@ import textwrap
 import nltk
 nltk.download('punkt')
 from transformers import BartTokenizer, BartForConditionalGeneration
+
 tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
 model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn')
-
 def summarize(text):
     inputs = tokenizer.encode("" + text, return_tensors='pt', max_length=1024, truncation=True)
     summary_ids = model.generate(inputs, max_length=200, min_length=20, length_penalty=2.0, num_beams=4, early_stopping=True)
@@ -30,7 +30,7 @@ def split_text(text, max_chunk_size = 200):
 
 def summary(doc_1):
     text_1 = extract_text(doc_1)
-    chunks = split_text(text_1)
+    chunks = split_text(text_1, max_chunk_size= max(len(text_1.split())//10, 200))
     summaries = []
     for chunk in chunks:
         summary = summarize(chunk)
