@@ -17,4 +17,4 @@ def categories(doc):
     s.append("Non-MAGI")
   elif "magi" in text:
     s.append("MAGI")
-  return ' '.join(s)
+  return s
