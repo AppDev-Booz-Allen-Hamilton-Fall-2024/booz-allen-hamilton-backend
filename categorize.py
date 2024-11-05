@@ -1,4 +1,6 @@
-def categories(text):
+from pdfminer.high_level import extract_text
+def categories(doc):
+  text = extract_text(doc)
   text = text.lower()
   s = []
   if "medicaid" in text:

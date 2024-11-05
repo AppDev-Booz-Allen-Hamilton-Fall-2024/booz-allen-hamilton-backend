@@ -38,6 +38,31 @@ cur = conn.cursor()
 # to get the keywords, whihc come as a list
 # Another file called catgeories which will give u chip , etx. which comes in a string
 
+# If it already exists, dont add it
+
+# Store file path
+lst = scraper("https://www.pacodeandbulletin.gov/Display/pacode?titleNumber=055&file=/secure/pacode/data/055/055toc.html&searchunitkeywords=&operator=OR&title=null", "https://www.pacodeandbulletin.gov")
+count = 1
+for filename in lst:
+    # Add filename to database inside ***
+    # Make cur.execute if statement to make sure that duplicates aren't added ***
+
+    #sum = summary(filename)
+    #cats = categories(filename)
+    #keywords = keyword(filename)
+
+    # Add sum, categories, and keywords ****
+
+    # Add file
+     # Check for duplicates
+    cur.execute("SELECT COUNT(*) FROM policy WHERE policy_name = %s", (filename,))
+    if cur.fetchone()[0] == 0:
+        cur.execute("INSERT INTO policy (policy_id, policy_name) VALUES (%s, %s)", (count, filename))
+        count += 1
+
+    # instead of using count to number the policy_id, use the SQL method (indexing) that
+    # automatically adds 
+
 # Make the changes to the database persistent
 conn.commit()
 

@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from tqdm import tqdm
 from fpdf import FPDF
-p = "/Users/rohan/booz_allen/booz-allen-hamilton-backend/policies/IA"
+p = "/Users/buenosnachos/Desktop/booz-allen-hamilton-backend/policies/PA"
 if not os.path.isdir(p):
     os.mkdir(p)
 head = {
@@ -108,16 +108,16 @@ def scrape_text_to_pdf(url, download_dir, head):
             pdf.output(pdf_filename)
             lst.append(pdf_filename)
         return lst
-def scraper():
-    soup = get_soup("https://www.legis.iowa.gov/publications/search?tab=true&rows=10&start=0&sort=lbl%20desc%2Csn%20asc%2Cname%20asc&q=&fq=-status%3A%22Reserved%22%20AND%20-status%3A%22Repealed%22%20AND%20-status%3A%22Rescinded%22&fq=(l5%3A%22law%3A1code%3A1476%3A06%3A0006%3A00249A-1388805%7CCHAPTER%20249A%20MEDICAL%20ASSISTANCE%22)")
-    links = find_policy_links("https://www.legis.iowa.gov", soup)
+def scraper(full_link, short_link):
+    soup = get_soup(full_link)
+    links = find_policy_links(short_link, soup)
     if links:
         lst = []
         for link in links:
             lst.append(download_file(link, p))
         return lst
     else:
-        return scrape_text_to_pdf("https://www.legis.iowa.gov/publications/search?tab=true&rows=10&start=0&sort=lbl%20desc%2Csn%20asc%2Cname%20asc&q=&fq=-status%3A%22Reserved%22%20AND%20-status%3A%22Repealed%22%20AND%20-status%3A%22Rescinded%22&fq=(l5%3A%22law%3A1code%3A1476%3A06%3A0006%3A00249A-1388805%7CCHAPTER%20249A%20MEDICAL%20ASSISTANCE%22)", p, head)
+        return scrape_text_to_pdf(full_link, p, head)
 
 
     # try:
