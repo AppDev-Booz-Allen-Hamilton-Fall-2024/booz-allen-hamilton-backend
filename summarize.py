@@ -4,6 +4,7 @@ from nltk.tokenize import sent_tokenize
 import textwrap
 import nltk
 nltk.download('punkt')
+nltk.download('punkt_tab')
 from transformers import BartTokenizer, BartForConditionalGeneration
 
 tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
