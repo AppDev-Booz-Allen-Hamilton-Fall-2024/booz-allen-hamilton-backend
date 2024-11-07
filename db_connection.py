@@ -42,13 +42,13 @@ cur = conn.cursor()
 
 # Store file path
 lst = scraper("https://www.pacodeandbulletin.gov/Display/pacode?titleNumber=055&file=/secure/pacode/data/055/055toc.html&searchunitkeywords=&operator=OR&title=null", "https://www.pacodeandbulletin.gov")
+remove_this = 1
 
 # Go through every file_path in the lst
 for file_path in lst:
     # Check for duplicates by counting existing records with the same file_path
     cur.execute("SELECT policy_id FROM policy WHERE og_file_path = %s", (file_path,))
     result = cur.fetchone()
-    remove_this = 1
     
     if result:
         # If the file_path exists, get the existing policy_id
@@ -61,20 +61,19 @@ for file_path in lst:
         # Cats and keywords stores an array
         cats = categories(file_path) 
         keywords = keyword(file_path) 
-
-        # Sum stores a big string
-        sum = summary(file_path)
             
         # Loop through array of keywords
         for k in keywords:
             # Insert keyword
             cur.execute("INSERT INTO keyword (policy_id, keyword) VALUES (%s, %s)", (policy_id, k))
-        # Insert categories
+        # Insert categories\
         for c in cats:
             # Insert category
             cur.execute("INSERT INTO category (policy_id, category) VALUES (%s, %s)", (policy_id, c))
         if remove_this == 1:
-            cur.execute("INSERT INTO policy (policy_id, summary) VALUES (%s, %s)", (policy_id, sum))
+            # Sum stores a big string
+            sum = summary(file_path)
+            cur.execute("UPDATE policy SET summary = %s WHERE policy_id = %s", (sum, policy_id))
             remove_this = remove_this + 1
 
 # Make the changes to the database persistent
