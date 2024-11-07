@@ -20,29 +20,8 @@ conn = psycopg2.connect(database = "adc",
 # Open a cursor to perform database operations
 cur = conn.cursor()
 
-# Write code here (use cur.execute() to execute SQL commands)
-
-# There are three funcitons that occur when a file is uploaded:
-# 1) Summarize
-# 2) Key Word Extraction (ner)
-# 3) Category
-# We need to store the result of these functions for every uploaded file in the database
-# To do this, we need to import file
-
-# File paths first
-# Upload and Web Scraped 
-# , and then
-# When summarize function is called, and the summary is generated, we want to store it
-# in the summarize column
-# Another file called key word extraction and we will have to put in the pdf intiot here
-# to get the keywords, whihc come as a list
-# Another file called catgeories which will give u chip , etx. which comes in a string
-
-# If it already exists, dont add it
-
 # Store file path
 lst = scraper("https://www.pacodeandbulletin.gov/Display/pacode?titleNumber=055&file=/secure/pacode/data/055/055toc.html&searchunitkeywords=&operator=OR&title=null", "https://www.pacodeandbulletin.gov")
-remove_this = 1
 
 # Go through every file_path in the lst
 for file_path in lst:
@@ -70,11 +49,10 @@ for file_path in lst:
         for c in cats:
             # Insert category
             cur.execute("INSERT INTO category (policy_id, category) VALUES (%s, %s)", (policy_id, c))
-        if remove_this == 1:
-            # Sum stores a big string
-            sum = summary(file_path)
-            cur.execute("UPDATE policy SET summary = %s WHERE policy_id = %s", (sum, policy_id))
-            remove_this = remove_this + 1
+        
+        # Sum stores a big string
+        sum = summary(file_path)
+        cur.execute("UPDATE policy SET summary = %s WHERE policy_id = %s", (sum, policy_id))
 
 # Make the changes to the database persistent
 conn.commit()
