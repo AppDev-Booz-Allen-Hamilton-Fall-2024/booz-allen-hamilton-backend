@@ -12,11 +12,16 @@ from scraping import scraper
 
 # conn stores the connection to the local database
 conn = psycopg2.connect(database = "adc", 
-                        user = "buenosnachos", 
+                        user = "postgres", 
                         host= 'localhost',
                         password = "12345",
                         port = 5432)
-
+# angela
+# conn = psycopg2.connect(database = "adc", 
+#                         user = "angela", 
+#                         host= 'localhost',
+#                         password = "12345",
+#                         port = 5432)
 # Open a cursor to perform database operations
 cur = conn.cursor()
 
@@ -52,7 +57,7 @@ for file_path in lst:
         
         # Sum stores a big string
         sum = summary(file_path)
-        cur.execute("UPDATE policy SET summary = %s WHERE policy_id = %s", (sum, policy_id))
+        # cur.execute("UPDATE policy SET summary = %s WHERE policy_id = %s", (sum, policy_id))
 
 # Make the changes to the database persistent
 conn.commit()

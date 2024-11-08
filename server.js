@@ -14,6 +14,15 @@ app.get("/", (req, res) => {
   res.send("Hello from Express!");
 });
 
+
+// Policies 
+app.use('/api/policies', policiesRoute); 
+const policiesRoute = require('./routes/policies');
+
+//Keywords
+const keywordRoutes = require('./routes/keywords');
+app.use('/api/policies', keywordRoutes);
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
