@@ -69,3 +69,17 @@ CONSTRAINT fk_policy_id FOREIGN KEY (policy_id) REFERENCES policy (policy_id)
 
 -- Display table
 SELECT * FROM category;
+
+CREATE TABLE summary_diff(
+    policy_id_1 INT,          -- policy_id of the first policy
+    policy_id_2 INT,          -- policy_id of the second policy
+    summary_difference TEXT,  -- stores the difference between summaries (could be a text field or another appropriate type)
+    created_when DATE,        -- date when the summary difference was created
+    
+    -- Make foreign keys to refer to the policy table
+    CONSTRAINT fk_policy_1 FOREIGN KEY (policy_id_1) REFERENCES policy (policy_id),
+    CONSTRAINT fk_policy_2 FOREIGN KEY (policy_id_2) REFERENCES policy (policy_id),
+    
+    -- Ensure there is only one difference record for each unique pair of policies
+    CONSTRAINT unique_policy_pair UNIQUE (policy_id_1, policy_id_2)
+);
