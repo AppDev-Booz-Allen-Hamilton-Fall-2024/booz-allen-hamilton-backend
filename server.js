@@ -15,13 +15,17 @@ app.get("/", (req, res) => {
 });
 
 
-// Policies 
-app.use('/api/policies', policiesRoute); 
+// Import routes
 const policiesRoute = require('./routes/policies');
-
-//Keywords
 const keywordRoutes = require('./routes/keywords');
+const summaryRoutes = require('./routes/summary');
+const searchRoutes = require('./routes/search');
+
+// Use routes
+app.use('/api/policies', policiesRoute);
 app.use('/api/policies', keywordRoutes);
+app.use('/api/policies', summaryRoutes);
+app.use('/api/search', searchRoutes); 
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
