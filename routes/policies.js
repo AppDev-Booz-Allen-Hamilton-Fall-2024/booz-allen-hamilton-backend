@@ -10,7 +10,8 @@ router.get("/", async (req, res) => {
           p.policy_id, 
           p.policy_name, 
           p.effective_date, 
-          p.expiration_date, 
+          p.expiration_date,
+          p.og_file_path,
           STRING_AGG(c.category, ', ') AS categories 
         FROM 
           policy p
