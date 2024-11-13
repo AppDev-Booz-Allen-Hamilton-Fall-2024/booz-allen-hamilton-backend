@@ -1,11 +1,11 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const db = require('../db'); 
+const db = require("../db");
 
 // API to fetch policies
-router.get('/', async (req, res) => {
-    try {
-      const policies = await db.query(`
+router.get("/", async (req, res) => {
+  try {
+    const policies = await db.query(`
         SELECT 
           p.policy_id, 
           p.policy_name, 
@@ -19,11 +19,13 @@ router.get('/', async (req, res) => {
         GROUP BY 
           p.policy_id
       `);
-      res.json(policies.rows);
-    } catch (error) {
-      console.error("Database error: ", error);
-      res.status(500).json({ message: 'Error fetching policies', error: error.message });
-    }
-  });
-  
-  module.exports = router;
+    res.json(policies.rows);
+  } catch (error) {
+    console.error("Database error: ", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching policies", error: error.message });
+  }
+});
+
+module.exports = router;
