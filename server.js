@@ -22,6 +22,7 @@ const summaryRoutes = require("./routes/summary");
 const searchRoutes = require("./routes/search");
 const fileRoutes = require("./routes/file");
 const uploadPolicyRoutes = require("./routes/upload-policy");
+const editFields = require('./routes/edid-fields');
 
 // Use routes
 app.use("/api/policies", policiesRoute);
@@ -30,6 +31,7 @@ app.use("/api/policies", summaryRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/policies", fileRoutes);
 app.use("/api/", uploadPolicyRoutes);
+app.use('/api', editFields); 
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

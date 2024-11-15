@@ -50,7 +50,7 @@ for file_path in lst:
         for k in keywords:
             # Insert keyword
             cur.execute("INSERT INTO keyword (policy_id, keyword) VALUES (%s, %s)", (policy_id, k))
-        # Insert categories\
+        # Insert categories
         for c in cats:
             # Insert category
             cur.execute("INSERT INTO category (policy_id, category) VALUES (%s, %s)", (policy_id, c))
