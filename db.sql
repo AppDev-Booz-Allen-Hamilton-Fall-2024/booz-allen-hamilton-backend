@@ -20,6 +20,7 @@ CREATE TABLE policy(
 -- policy_id is automatically generated when a new policy is added
 policy_id SERIAL primary key,
 policy_name VARCHAR(100),
+nickname VARCHAR(100),
 effective_date DATE,
 expiration_date DATE,
 summary VARCHAR(8000),
@@ -69,6 +70,18 @@ CONSTRAINT fk_policy_id FOREIGN KEY (policy_id) REFERENCES policy (policy_id)
 
 -- Display table
 SELECT * FROM category;
+
+-- Create table called program that stores all of the programs associated
+-- with a policy
+CREATE TABLE program(
+policy_id INT,
+program VARCHAR(30),
+-- create a fk for policy_id that points to policy_id of the policy table
+CONSTRAINT fk_policy_id FOREIGN KEY (policy_id) REFERENCES policy (policy_id)
+);
+
+-- Display table
+SELECT * FROM program;
 
 CREATE TABLE summary_diff(
     policy_id_1 INT,          -- policy_id of the first policy
