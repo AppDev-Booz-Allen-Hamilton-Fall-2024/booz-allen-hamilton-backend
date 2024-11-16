@@ -5,14 +5,15 @@ import psycopg2
 # returns a string
 from categorize import categories
 # returns a LARGE string
-from summarize import summary
+# from summarize import summary
 # returns a list
 from ner import keyword
 from scraping import scraper
+import os
 
 # conn stores the connection to the local database
 conn = psycopg2.connect(database = "adc", 
-                        user = "postgres", 
+                        user = "rohan", 
                         host= 'localhost',
                         password = "12345",
                         port = 5432)
@@ -27,7 +28,7 @@ cur = conn.cursor()
 
 # Store file path
 lst = scraper("https://www.pacodeandbulletin.gov/Display/pacode?titleNumber=055&file=/secure/pacode/data/055/055toc.html&searchunitkeywords=&operator=OR&title=null", "https://www.pacodeandbulletin.gov")
-
+# lst = os.listdir("/Users/rohan/booz_allen/booz-allen-hamilton-backend/policies/PA")
 # Go through every file_path in the lst
 for file_path in lst:
     # Check for duplicates by counting existing records with the same file_path
@@ -39,7 +40,12 @@ for file_path in lst:
         policy_id = result[0]
     else:
         # If the file_path does not exist, insert it and retrieve the new policy_id
-        cur.execute("INSERT INTO policy (og_file_path) VALUES (%s) RETURNING policy_id", (file_path,))
+        name = file_path.split('/')[-1]
+        cur.execute("""
+            INSERT INTO policy (og_file_path, policy_name) 
+            VALUES (%s, %s) 
+            RETURNING policy_id
+        """, (file_path, name))
         policy_id = cur.fetchone()[0]
 
         # Cats and keywords stores an array
@@ -55,8 +61,8 @@ for file_path in lst:
             # Insert category
             cur.execute("INSERT INTO category (policy_id, category) VALUES (%s, %s)", (policy_id, c))
         
-        # Sum stores a big string
-        sum = summary(file_path)
+    #     # Sum stores a big string
+    #     sum = summary(file_path)
         # cur.execute("UPDATE policy SET summary = %s WHERE policy_id = %s", (sum, policy_id))
 
 # Make the changes to the database persistent

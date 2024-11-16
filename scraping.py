@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from tqdm import tqdm
 from fpdf import FPDF
-p = "/Users/buenosnachos/Desktop/booz-allen-hamilton-backend/policies/PA"
+p = "/Users/rohan/booz_allen/booz-allen-hamilton-backend/policies/PA"
 if not os.path.isdir(p):
     os.mkdir(p)
 head = {
@@ -118,6 +118,10 @@ def scraper(full_link, short_link):
         return lst
     else:
         return scrape_text_to_pdf(full_link, p, head)
+def main():
+    scraper("https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC?tac_view=3&ti=1&pt=15", "https://texreg.sos.state.tx.us")
+if __name__ == "__main__":
+    main()
 
 
     # try:
