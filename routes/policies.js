@@ -50,4 +50,28 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get(`/:policyId/get`, async (req, res) => {
+  try {
+    const { policyId } = req.params;
+    console.log((Number(policyId)))
+    
+    const result = await db.query("SELECT policy_name, effective_date, prev_policy_id, next_policy_id, og_file_path FROM policy WHERE policy_id = $1",
+      [policyId]);
+    console.log(result);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Policy not found' });
+    }
+
+    res.json({ name: result.rows[0].policy_name, date: result.rows[0].effective_date, prevId: result.rows[0].prev_policy_id, nextId: result.rows[0].next_policy_id,filePath: result.rows[0].og_file_path });
+  } catch (error) {
+    console.error("Database error: ", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching policies", error: error.message });
+  }
+
+})
+
+
 module.exports = router;
