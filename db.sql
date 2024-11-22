@@ -31,18 +31,21 @@ annotated_file_path VARCHAR(260),
 
 -- Make fk columns
 state_name VARCHAR(2),
-prev_policy_id INT,
-next_policy_id INT,
 
 -- Make state_name a foreign key that points to state_name in the state table
-CONSTRAINT fk_state FOREIGN KEY (state_name) REFERENCES public."state" (state_name)
+CONSTRAINT fk_state FOREIGN KEY (state_name) REFERENCES public."state" (state_name),
+
+parent_policy_id INT,
+CONSTRAINT fk_parent_policy FOREIGN KEY (parent_policy_id) REFERENCES policy (policy_id)
+
 );
+
+-- Index to optimize queries on parent_policy_id
+CREATE INDEX idx_parent_policy_id ON policy (parent_policy_id);
 
 -- Alter table to add self-referencing foreign keys
 -- Make prev_policy_id and next_policy_id point to policy_id primary key in the policy table
-ALTER TABLE policy
-ADD CONSTRAINT fk_prev_policy_id FOREIGN KEY (prev_policy_id) REFERENCES policy (policy_id),
-ADD CONSTRAINT fk_next_policy_id FOREIGN KEY (next_policy_id) REFERENCES policy (policy_id);
+
 
 -- Display table
 SELECT * FROM policy;
