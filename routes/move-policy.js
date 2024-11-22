@@ -3,8 +3,10 @@ const router = express.Router();
 const db = require("../db");
 
 const generateTextDifference = (file1, file2, policy_id_one, policy_id_two) => {
+  console.log("Inside generateTextDifference");
   const pythonScriptPath = path.join(__dirname, "..", "text_diff.py");
-  const pythonProcess = spawn("python", [pythonProcess, file1, file2]);
+  console.log(pythonScriptPath);
+  const pythonProcess = spawn("python3", [pythonScriptPath, file1, file2]);
 
   let output = "";
   pythonProcess.stdout.on("data", (data) => {
@@ -71,6 +73,7 @@ router.post("/:policy_id_one/:policy_id_two/move-policy", async (req, res) => {
     const childPolicy = policyOne.rows[0];
 
     console.log("check done");
+
     if (childPolicy.parent_policy_id !== null) {
       await db.query("ROLLBACK");
       return res.status(400).json({
@@ -93,6 +96,11 @@ router.post("/:policy_id_one/:policy_id_two/move-policy", async (req, res) => {
     res.status(200).json({
       message: `Policy ID ${policy_id_one} successfully set as a version of Policy ID ${policy_id_two}.`,
     });
+
+    const file1 = childPolicy.og_file_path;
+    const file2 = parentPolicy.og_file_path;
+
+    generateTextDifference(file1, file2, policy_id_one, policy_id_two);
   } catch (error) {
     await db.query("ROLLBACK");
     console.error("Error occurred during move-policy:", error.message);
