@@ -12,8 +12,8 @@ const PORT = process.env.PORT || 4000;
 
 app.use(
   cors({
-    origin: "http://localhost:3000", // Frontend origin
-    credentials: true, // Allow cookies and other credentials
+    origin: "http://localhost:3000",
+    credentials: true,
   })
 );
 app.use(bodyParser.json());
@@ -28,7 +28,7 @@ app.use(
     secret: "your_session_secret",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // In production, set secure: true with HTTPS
+    cookie: { secure: false },
   })
 );
 app.use(passport.initialize());
@@ -47,8 +47,8 @@ const summaryRoutes = require("./routes/summary");
 const searchRoutes = require("./routes/search");
 const fileRoutes = require("./routes/files");
 const uploadPolicyRoutes = require("./routes/upload-policy");
-const editFields = require('./routes/edit-fields');
-const filterRoutes = require('./routes/filter');
+const editFields = require("./routes/edit-fields");
+const movePolicyRoutes = require("./routes/move-policy");
 
 // Use routes
 app.use("/api/policies", policiesRoute);
@@ -56,9 +56,9 @@ app.use("/api/policies", keywordRoutes);
 app.use("/api/policies", summaryRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/policies", fileRoutes);
-app.use('/api/filter', filterRoutes);
 app.use("/api/", uploadPolicyRoutes);
-app.use('/api', editFields); 
+//app.use("/api", editFields);
+app.use("/api/policies", movePolicyRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
