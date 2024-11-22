@@ -44,21 +44,23 @@ app.get("/", (req, res) => {
 const policiesRoute = require("./routes/policies");
 const keywordRoutes = require("./routes/keywords");
 const summaryRoutes = require("./routes/summary");
-const searchRoutes = require("./routes/search");
+//const searchRoutes = require("./routes/search");
 const fileRoutes = require("./routes/files");
 const uploadPolicyRoutes = require("./routes/upload-policy");
 const editFields = require("./routes/edit-fields");
 const movePolicyRoutes = require("./routes/move-policy");
+const searchFilterRoutes = require("./routes/search-filter");
 
 // Use routes
 app.use("/api/policies", policiesRoute);
 app.use("/api/policies", keywordRoutes);
 app.use("/api/policies", summaryRoutes);
-app.use("/api/search", searchRoutes);
+//app.use("/api/search", searchRoutes);
 app.use("/api/policies", fileRoutes);
 app.use("/api/", uploadPolicyRoutes);
 //app.use("/api", editFields);
 app.use("/api/policies", movePolicyRoutes);
+app.use("/api/", searchFilterRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
