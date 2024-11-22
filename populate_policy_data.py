@@ -1,91 +1,77 @@
+# This file establishes a connection for the PostgreSQL database
+
+# Import package, on terminal: pip3 install psycopg2-binary
 import psycopg2
+# returns a string
 from categorize import categories
+# returns a LARGE string
 # from summarize import summary
+# returns a list
 from ner import keyword
-import argparse
-import json
-import sys
-def process_policies(policy_ids):
-    conn = psycopg2.connect(
-        database="adc",
-        user="rohan",
-        host="localhost",
-        password="12345",
-        port=5432
-    )
-    cur = conn.cursor()
+from scraping import scraper
+from multi_label import classify
+import os
 
-    for policy_id in policy_ids:
-        # Fetch the og_file_path for the given policy_id
-        cur.execute("SELECT og_file_path FROM policy WHERE policy_id = %s", (policy_id,))
-        result = cur.fetchone()
-        print("FILEPATH: ", result)
+# conn stores the connection to the local database
+conn = psycopg2.connect(database = "adc", 
+                        user = "rohan", 
+                        host= 'localhost',
+                        password = "12345",
+                        port = 5432)
+# angela
+# conn = psycopg2.connect(database = "adc", 
+#                         user = "angela", 
+#                         host= 'localhost',
+#                         password = "12345",
+#                         port = 5432)
+# Open a cursor to perform database operations
+cur = conn.cursor()
 
-        if result:
-            print(f"Processing policy {policy_id}")
-            file_path = result[0]
-            if '.zip' not in file_path:
-                print("RESULT: ", file_path)
+# Store file path
+lst = scraper("https://www.pacodeandbulletin.gov/Display/pacode?titleNumber=055&file=/secure/pacode/data/055/055toc.html&searchunitkeywords=&operator=OR&title=null", "https://www.pacodeandbulletin.gov")
+# lst = os.listdir("/Users/rohan/booz_allen/booz-allen-hamilton-backend/policies/PA")
+# Go through every file_path in the lst
+for file_path in lst:
+    # Check for duplicates by counting existing records with the same file_path
+    cur.execute("SELECT policy_id FROM policy WHERE og_file_path = %s", (file_path,))
+    result = cur.fetchone()
+    
+    if result:
+        # If the file_path exists, get the existing policy_id
+        policy_id = result[0]
+    else:
+        # If the file_path does not exist, insert it and retrieve the new policy_id
+        name = file_path.split('/')[-1]
+        cur.execute("""
+            INSERT INTO policy (og_file_path, policy_name) 
+            VALUES (%s, %s) 
+            RETURNING policy_id
+        """, (file_path, name))
+        policy_id = cur.fetchone()[0]
 
-                # Check if keywords already exist for this policy
-                cur.execute("SELECT 1 FROM keyword WHERE policy_id = %s LIMIT 1", (policy_id,))
-                keyword_exists = cur.fetchone() is not None
-                print("KEYWORD: ", keyword_exists)
+        # Cats and keywords stores an array
+        cats = categories(file_path) 
+        keywords = keyword(file_path)
+        labs = classify(file_path)
+            
+        # Loop through array of keywords
+        for k in keywords:
+            # Insert keyword
+            cur.execute("INSERT INTO keyword (policy_id, keyword) VALUES (%s, %s)", (policy_id, k))
+        # Insert categories
+        for c in cats:
+            # Insert category
+            cur.execute("INSERT INTO program (policy_id, program) VALUES (%s, %s)", (policy_id, c))
+        for l in labs:
+            cur.execute("INSERT INTO category (policy_id, category) VALUES (%s, %s)", (policy_id, l))
+        
+    #     # Sum stores a big string
+    #     sum = summary(file_path)
+        # cur.execute("UPDATE policy SET summary = %s WHERE policy_id = %s", (sum, policy_id))
 
-                # Check if categories already exist for this policy
-                cur.execute("SELECT 1 FROM category WHERE policy_id = %s LIMIT 1", (policy_id,))
-                category_exists = cur.fetchone() is not None
-                print("CATEGORY: ", category_exists)
-                if not keyword_exists and not category_exists:
-                    # Generate categories and keywords
-                    cats = categories(file_path)
-                    print("CATEGORIES: ", cats)
-                    keywords = keyword(file_path)
-                    print("KEYWORDS: ", keywords)
+# Make the changes to the database persistent
+conn.commit()
 
-                    # Insert keywords into the database
-                    for k in keywords:
-                        cur.execute(
-                            "INSERT INTO keyword (policy_id, keyword) VALUES (%s, %s)",
-                            (policy_id, k)
-                        )
-
-                    # Insert categories into the database
-                    for c in cats:
-                        cur.execute(
-                            "INSERT INTO category (policy_id, category) VALUES (%s, %s)",
-                            (policy_id, c)
-                        )
-            # n = file_path.split('/')[-1]
-            # cur.execute(
-            #             "INSERT INTO policy (policy_id, policy_name) VALUES (%s, %s)",
-            #             (policy_id, n)
-            #         )
-
-            # Generate summary and update the policy record
-            # sum_text = summary(file_path)
-            # cur.execute(
-            #     "UPDATE policy SET summary = %s WHERE policy_id = %s",
-            #     (sum_text, policy_id)
-            # )
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-
-parser = argparse.ArgumentParser(description='Populate policy data.')
-print("SDFLSDKFJSLDKJFALKFJSAD")
-parser.add_argument('policy_ids', type=str, help='JSON string of policy IDs')
-args = parser.parse_args()
-
-try:
-    # Parse the JSON string into a Python list
-    policy_ids = json.loads(args.policy_ids)
-    if not isinstance(policy_ids, list):
-        raise ValueError("policy_ids should be a list of integers.")
-except (json.JSONDecodeError, ValueError) as e:
-    sys.stderr.write(f"Error: {e}\n")
-    sys.exit(2)
-
-process_policies(policy_ids)
+# Close cursor and communication with the database
+cur.close()
+conn.close()
