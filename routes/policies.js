@@ -55,7 +55,7 @@ router.get(`/:policyId/get`, async (req, res) => {
     const { policyId } = req.params;
     console.log((Number(policyId)))
     
-    const result = await db.query("SELECT policy_name, effective_date, prev_policy_id, next_policy_id, og_file_path FROM policy WHERE policy_id = $1",
+    const result = await db.query("SELECT policy_name, effective_date, og_file_path FROM policy WHERE policy_id = $1",
       [policyId]);
     console.log(result);
 
@@ -73,5 +73,50 @@ router.get(`/:policyId/get`, async (req, res) => {
 
 })
 
+router.get(`/:policyId/children`, async (req, res) => {
+  try {
+    const { policyId } = req.params;
+    console.log((Number(policyId)))
+    
+    const result = await db.query("SELECT policy_name, effective_date, prev_policy_id, next_policy_id, og_file_path FROM policy WHERE parent_policy_id = $1",
+      [policyId]);
+    console.log(result);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Policy not found' });
+    }
+
+    versions = result.rows.map((row) => {
+      return {name: row.policy_name, date: row.effective_date, filePath: row.og_file_path};
+    })
+
+    versions.sort((a, b) => {
+      return a.date - b.date
+    })
+
+    res.json({versions: versions});
+  } catch (error) {
+    console.error("Database error: ", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching policy versions", error: error.message });
+  }
+
+})
+
+router.post("/:policyId/annotate/:annotations", async(req, res) => {
+  try {
+    const {policyId, annotations} = req.params;
+    const result = db.query(
+      'UPDATE policy SET annotations = $2 WHERE policy_id = $1',
+      [policyId, annotations]
+    )
+  } catch (error) {
+    console.error("Database error: ", error);
+    res
+      .status(500)
+      .json({ message: "Error storing policy annotations", error: error.message });
+  }
+})
 
 module.exports = router;
