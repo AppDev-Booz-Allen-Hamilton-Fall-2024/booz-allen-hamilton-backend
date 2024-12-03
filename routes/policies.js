@@ -57,13 +57,12 @@ router.get(`/:policyId/get`, async (req, res) => {
     
     const result = await db.query("SELECT policy_name, effective_date, og_file_path FROM policy WHERE policy_id = $1",
       [policyId]);
-    console.log(result);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Policy not found' });
     }
 
-    res.json({ name: result.rows[0].policy_name, date: result.rows[0].effective_date, prevId: result.rows[0].prev_policy_id, nextId: result.rows[0].next_policy_id,filePath: result.rows[0].og_file_path });
+    res.json({ name: result.rows[0].policy_name, date: result.rows[0].effective_date, filePath: result.rows[0].og_file_path });
   } catch (error) {
     console.error("Database error: ", error);
     res
@@ -78,7 +77,7 @@ router.get(`/:policyId/children`, async (req, res) => {
     const { policyId } = req.params;
     console.log((Number(policyId)))
     
-    const result = await db.query("SELECT policy_name, effective_date, prev_policy_id, next_policy_id, og_file_path FROM policy WHERE parent_policy_id = $1",
+    const result = await db.query("SELECT policy_name, effective_date, og_file_path, annotations FROM policy WHERE parent_policy_id = $1",
       [policyId]);
     console.log(result);
 
@@ -87,14 +86,20 @@ router.get(`/:policyId/children`, async (req, res) => {
     }
 
     versions = result.rows.map((row) => {
-      return {name: row.policy_name, date: row.effective_date, filePath: row.og_file_path};
+      return {name: row.policy_name, date: row.effective_date, filePath: row.og_file_path, annotations: row.annotations};
     })
 
     versions.sort((a, b) => {
       return a.date - b.date
     })
 
-    res.json({versions: versions});
+    const r = await db.query("SELECT policy_name, effective_date, og_file_path, annotations FROM policy WHERE policy_id = $1",[policyId]);
+
+    versions.push({ name: r.rows[0].policy_name, date: r.rows[0].effective_date, filePath: r.rows[0].og_file_path, annotations: r.rows[0].annotations })
+    
+    
+
+    res.json(versions);
   } catch (error) {
     console.error("Database error: ", error);
     res
