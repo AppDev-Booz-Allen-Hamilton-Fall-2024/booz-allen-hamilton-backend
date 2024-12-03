@@ -2,33 +2,47 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 
-// Search policies with partial and exact matches
 router.get("/", async (req, res) => {
-  const { query, keyword } = req.query;
+  const { searchTerm } = req.query;
 
-  if (!query && !keyword) {
-    return res.status(400).json({ error: "Query parameter or keyword is required" });
+  if (!searchTerm || searchTerm.trim().length < 3) {
+    return res.status(400).json({ error: "Query must have at least 3 characters" });
   }
 
   try {
+    const trimmedSearchTerm = searchTerm.trim();
     const result = await db.query(
       `
-      SELECT DISTINCT policy.*
-      FROM policy
-      LEFT JOIN keyword ON policy.policy_id = keyword.policy_id
-      WHERE (
-        policy.policy_name ILIKE '%' || $1 || '%' OR
-        policy.nickname ILIKE '%' || $1 || '%' OR
-        policy.categories ILIKE '%' || $1 || '%'
-      )
-      ${keyword ? "AND keyword.keyword = $2" : ""}
+      SELECT 
+        p.policy_id,
+        p.policy_name,
+        p.nickname,
+        STRING_AGG(DISTINCT c.category, ', ') AS categories,
+        p.effective_date,
+        p.expiration_date,
+        p.og_file_path,
+        parent.policy_id AS parent_id,
+        parent.policy_name AS parent_name
+      FROM policy p
+      LEFT JOIN category c ON p.policy_id = c.policy_id
+      LEFT JOIN policy parent ON p.parent_policy_id = parent.policy_id
+      WHERE 
+        p.policy_name ILIKE '%' || $1 || '%'
+        OR p.nickname ILIKE '%' || $1 || '%'
+        OR c.category ILIKE '%' || $1 || '%'
+        OR parent.policy_name ILIKE '%' || $1 || '%'
+      GROUP BY 
+        p.policy_id, p.policy_name, p.nickname, p.effective_date, 
+        p.expiration_date, p.og_file_path, parent.policy_id, parent.policy_name
+      ORDER BY 
+        p.policy_name ASC;
       `,
-      keyword ? [query || "", keyword] : [query || ""]
+      [trimmedSearchTerm]
     );
 
-    res.json(result.rows);
+    res.json({ policies: result.rows });
   } catch (error) {
-    console.error("Error executing search query:", error);
+    console.error("Error executing search query:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });
   }
 });

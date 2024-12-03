@@ -27,7 +27,7 @@ summary VARCHAR(8000),
 created_when DATE,
 updated_when DATE,
 og_file_path VARCHAR(250),
-annotated_file_path VARCHAR(260),
+annotations TEXT,
 
 -- Make fk columns
 state_name VARCHAR(2),

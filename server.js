@@ -54,7 +54,7 @@ const filterRoutes = require('./routes/filter');
 app.use("/api/policies", policiesRoute);
 app.use("/api/policies", keywordRoutes);
 app.use("/api/policies", summaryRoutes);
-app.use("/api/search", searchRoutes);
+app.use("/api/search-filter", searchRoutes);
 app.use("/api/policies", fileRoutes);
 app.use('/api/filter', filterRoutes);
 app.use("/api/", uploadPolicyRoutes);
