@@ -103,7 +103,6 @@ router.get("/search-filter", async (req, res) => {
   try {
     const result = await db.query(query, values);
 
-    console.log("searching through shit");
     const policiesMap = new Map();
 
     result.rows.forEach((row) => {
