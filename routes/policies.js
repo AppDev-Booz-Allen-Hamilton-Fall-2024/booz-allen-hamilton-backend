@@ -77,27 +77,27 @@ router.get(`/:policyId/children`, async (req, res) => {
     const { policyId } = req.params;
     console.log((Number(policyId)))
     
-    const result = await db.query("SELECT policy_name, effective_date, og_file_path, annotations FROM policy WHERE parent_policy_id = $1",
+    const result = await db.query("SELECT policy_name, nickname, effective_date, og_file_path, annotations, policy_id FROM policy WHERE parent_policy_id = $1",
       [policyId]);
-    console.log(result);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Policy not found' });
     }
 
+    console.log(result.rows[0])
+
+
     versions = result.rows.map((row) => {
-      return {name: row.policy_name, date: row.effective_date, filePath: row.og_file_path, annotations: row.annotations};
+      return {name: row.policy_name, nickname: row.nickname, date: row.effective_date, filePath: row.og_file_path, annotations: row.annotations, policyId: row.policy_id};
     })
 
     versions.sort((a, b) => {
-      return a.date - b.date
+      return a.nickname.localeCompare(b.nickname);
     })
 
-    const r = await db.query("SELECT policy_name, effective_date, og_file_path, annotations FROM policy WHERE policy_id = $1",[policyId]);
+    const r = await db.query("SELECT policy_name, nickname, effective_date, og_file_path, annotations, policy_id FROM policy WHERE policy_id = $1",[policyId]);
 
-    versions.push({ name: r.rows[0].policy_name, date: r.rows[0].effective_date, filePath: r.rows[0].og_file_path, annotations: r.rows[0].annotations })
-    
-    
+    versions.push({ name: r.rows[0].policy_name, nickname: r.rows[0].nickname, date: r.rows[0].effective_date, filePath: r.rows[0].og_file_path, annotations: r.rows[0].annotations, policyId: r.rows[0].policy_id })
 
     res.json(versions);
   } catch (error) {
