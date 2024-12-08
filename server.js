@@ -47,6 +47,7 @@ const summaryRoutes = require("./routes/summary");
 const searchRoutes = require("./routes/search");
 const fileRoutes = require("./routes/files");
 const uploadPolicyRoutes = require("./routes/upload-policy");
+const movePolicyRoutes = require("./routes/move-policy");
 const editFields = require("./routes/edit-policy");
 const filterRoutes = require("./routes/filter");
 
@@ -54,7 +55,8 @@ const filterRoutes = require("./routes/filter");
 app.use("/api/policies", policiesRoute);
 app.use("/api/policies", keywordRoutes);
 app.use("/api/policies", summaryRoutes);
-app.use("/api/search-filter", searchRoutes);
+app.use("/api", searchRoutes);
+app.use("/api/policies", movePolicyRoutes);
 app.use("/api/policies", fileRoutes);
 app.use("/api/filter", filterRoutes);
 app.use("/api/", uploadPolicyRoutes);
