@@ -50,6 +50,8 @@ const uploadPolicyRoutes = require("./routes/upload-policy");
 const movePolicyRoutes = require("./routes/move-policy");
 const editFields = require("./routes/edit-policy");
 const filterRoutes = require("./routes/filter");
+const getRoutes = require("./routes/get");
+const text_diff_routes = require("./routes/textdiff-summary");
 
 // Use routes
 app.use("/api/policies", policiesRoute);
@@ -60,7 +62,9 @@ app.use("/api/policies", movePolicyRoutes);
 app.use("/api/policies", fileRoutes);
 app.use("/api/filter", filterRoutes);
 app.use("/api/", uploadPolicyRoutes);
+app.use("/api/policies", getRoutes);
 app.use("/api", editFields);
+app.use("/api/", text_diff_routes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
