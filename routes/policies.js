@@ -15,11 +15,14 @@ router.get("/", async (req, res) => {
         p.effective_date, 
         p.expiration_date,
         p.og_file_path,
-        STRING_AGG(c.category, ', ') AS categories
+        ARRAY_AGG(DISTINCT c.category) AS categories,
+        ARRAY_AGG(DISTINCT pr.program) AS programs
       FROM 
         policy p
       LEFT JOIN 
         category c ON p.policy_id = c.policy_id
+      LEFT JOIN
+        program pr ON p.policy_id = pr.policy_id
       WHERE 
         p.parent_policy_id IS NULL
       GROUP BY 
@@ -44,7 +47,7 @@ router.get("/", async (req, res) => {
       (policy) => policy.policy_id
     );
 
-    // Query to get all children of the fetched parent policies
+    // Query to get all children of the fetched parent policies with categories and programs
     const childrenPoliciesQuery = `
       SELECT 
         p.policy_id, 
@@ -52,11 +55,19 @@ router.get("/", async (req, res) => {
         p.effective_date, 
         p.expiration_date,
         p.og_file_path,
-        p.parent_policy_id
+        p.parent_policy_id,
+        ARRAY_AGG(DISTINCT c.category) AS categories,
+        ARRAY_AGG(DISTINCT pr.program) AS programs
       FROM 
         policy p
+      LEFT JOIN 
+        category c ON p.policy_id = c.policy_id
+      LEFT JOIN
+        program pr ON p.policy_id = pr.policy_id
       WHERE 
         p.parent_policy_id = ANY($1::int[])
+      GROUP BY 
+        p.policy_id, p.parent_policy_id
       ORDER BY 
         p.parent_policy_id ASC, p.effective_date ASC
     `;
