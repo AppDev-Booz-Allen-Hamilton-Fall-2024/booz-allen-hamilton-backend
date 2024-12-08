@@ -60,9 +60,6 @@ router.get("/", async (req, res) => {
     paramIndex++;
   }
 
-  console.log("filters");
-  console.log(filters);
-
   const parentPoliciesQuery = `
   SELECT 
     p.policy_id, 
