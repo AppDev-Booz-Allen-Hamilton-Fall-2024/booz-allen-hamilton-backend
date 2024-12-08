@@ -3,38 +3,97 @@ const router = express.Router();
 const db = require("../db");
 
 router.get("/", async (req, res) => {
+  const {
+    selectedState,
+    selectedCategory,
+    selectedEffectiveDate,
+    selectedExpirationDate,
+    searchTerm,
+    limit = 15,
+    offset = 0,
+  } = req.query;
+
+  const filters = [];
+  const values = [];
+  let paramIndex = 1;
+
+  if (searchTerm) {
+    const sanitizedSearchTerm = searchTerm.replace(/\\/g, "\\\\");
+    filters.push(`(
+        p.policy_name ILIKE '%' || $${paramIndex} || '%'
+        OR p.nickname ILIKE '%' || $${paramIndex} || '%'
+        OR EXISTS (
+          SELECT 1
+          FROM keyword k
+          WHERE k.policy_id = p.policy_id AND k.keyword = $${paramIndex}
+        )
+      )`);
+    values.push(sanitizedSearchTerm);
+    paramIndex++;
+  }
+
+  if (selectedState) {
+    filters.push(`p.state_name = $${paramIndex}`);
+    values.push(selectedState);
+    paramIndex++;
+  }
+
+  if (selectedEffectiveDate) {
+    filters.push(`p.effective_date::DATE = $${paramIndex}`);
+    values.push(selectedEffectiveDate);
+    paramIndex++;
+  }
+
+  if (selectedExpirationDate) {
+    filters.push(`p.expiration_date::DATE = $${paramIndex}`);
+    values.push(selectedExpirationDate);
+    paramIndex++;
+  }
+
+  if (selectedCategory) {
+    filters.push(`EXISTS (
+          SELECT 1
+          FROM category c
+          WHERE c.policy_id = p.policy_id AND c.category = $${paramIndex}
+        )`);
+    values.push(selectedCategory);
+    paramIndex++;
+  }
+
+  console.log("filters");
+  console.log(filters);
+
+  const parentPoliciesQuery = `
+  SELECT 
+    p.policy_id, 
+    p.policy_name, 
+    p.nickname,
+    p.effective_date, 
+    p.expiration_date,
+    p.og_file_path,
+    ARRAY_AGG(DISTINCT c.category) AS categories,
+    ARRAY_AGG(DISTINCT pr.program) AS programs
+  FROM 
+    policy p
+  LEFT JOIN 
+    category c ON p.policy_id = c.policy_id
+  LEFT JOIN
+    program pr ON p.policy_id = pr.policy_id
+  ${filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : ""}
+  ${filters.length > 0 ? "AND" : filters.length === 0 ? "WHERE" : ""}
+  p.parent_policy_id IS NULL
+  GROUP BY 
+    p.policy_id
+  ORDER BY 
+    p.nickname ASC, p.policy_name ASC
+  LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+`;
+
+  values.push(limit, offset);
+
   try {
-    const limit = parseInt(req.query.limit, 10) || 15;
-    const offset = parseInt(req.query.offset, 10) || 0;
+    const parentPolicies = await db.query(parentPoliciesQuery, values);
 
-    // Query to get parent policies within the limit and offset
-    const parentPoliciesQuery = `
-      SELECT 
-        p.policy_id, 
-        p.policy_name, 
-        p.nickname,
-        p.effective_date, 
-        p.expiration_date,
-        p.og_file_path,
-        ARRAY_AGG(DISTINCT c.category) AS categories,
-        ARRAY_AGG(DISTINCT pr.program) AS programs
-      FROM 
-        policy p
-      LEFT JOIN 
-        category c ON p.policy_id = c.policy_id
-      LEFT JOIN
-        program pr ON p.policy_id = pr.policy_id
-      WHERE 
-        p.parent_policy_id IS NULL
-      GROUP BY 
-        p.policy_id
-      ORDER BY 
-        p.policy_name ASC
-      LIMIT $1 OFFSET $2
-    `;
-    const parentPolicies = await db.query(parentPoliciesQuery, [limit, offset]);
-
-    // If no parent policies are found, return early
     if (parentPolicies.rows.length === 0) {
       return res.json({
         policies: [],
@@ -43,12 +102,10 @@ router.get("/", async (req, res) => {
       });
     }
 
-    // Extract parent policy IDs
     const parentPolicyIds = parentPolicies.rows.map(
       (policy) => policy.policy_id
     );
 
-    // Query to get all children of the fetched parent policies with categories and programs
     const childrenPoliciesQuery = `
       SELECT 
         p.policy_id, 
@@ -72,37 +129,36 @@ router.get("/", async (req, res) => {
       ORDER BY 
         p.parent_policy_id ASC, p.effective_date ASC
     `;
+
     const childrenPolicies = await db.query(childrenPoliciesQuery, [
       parentPolicyIds,
     ]);
 
-    // Group children by parent policy ID for easier mapping
     const childrenByParent = childrenPolicies.rows.reduce((acc, child) => {
       if (!acc[child.parent_policy_id]) acc[child.parent_policy_id] = [];
       acc[child.parent_policy_id].push(child);
       return acc;
     }, {});
 
-    // Combine parent policies with their children
     const policiesWithChildren = parentPolicies.rows.map((parent) => ({
       ...parent,
       children: childrenByParent[parent.policy_id] || [],
     }));
 
-    // Query to count total parent policies
     const countQuery = `
       SELECT COUNT(*) AS total
-      FROM policy
-      WHERE parent_policy_id IS NULL
+      FROM policy p
+      ${filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : ""}
+      ${filters.length > 0 ? "AND" : filters.length === 0 ? "WHERE" : ""}
+      p.parent_policy_id IS NULL
     `;
-    const countResult = await db.query(countQuery);
+
+    const countResult = await db.query(countQuery, values.slice(0, -2));
     const totalParentPolicies = parseInt(countResult.rows[0].total, 10);
 
-    // Pagination details
     const totalPages = Math.ceil(totalParentPolicies / limit);
     const hasNextPage = offset + limit < totalParentPolicies;
 
-    // Response
     res.json({
       policies: policiesWithChildren,
       totalPages: totalPages,
@@ -110,9 +166,10 @@ router.get("/", async (req, res) => {
     });
   } catch (error) {
     console.error("Database error: ", error);
-    res
-      .status(500)
-      .json({ message: "Error fetching policies", error: error.message });
+    res.status(500).json({
+      message: "Error fetching policies",
+      error: error.message,
+    });
   }
 });
 
