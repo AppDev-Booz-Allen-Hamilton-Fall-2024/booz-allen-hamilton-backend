@@ -12,6 +12,7 @@ router.get("/", async (req, res) => {
       SELECT 
         p.policy_id, 
         p.policy_name, 
+        p.nickname,
         p.effective_date, 
         p.expiration_date,
         p.og_file_path,
