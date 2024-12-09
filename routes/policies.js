@@ -17,20 +17,22 @@ router.get("/", async (req, res) => {
   const values = [];
   let paramIndex = 1;
 
+  // Apply filters dynamically
   if (searchTerm) {
-    const sanitizedSearchTerm = searchTerm.replace(/\\/g, "\\\\");
     filters.push(`(
-        p.policy_name ILIKE '%' || $${paramIndex} || '%'
-        OR p.nickname ILIKE '%' || $${paramIndex} || '%'
-        OR EXISTS (
-          SELECT 1
-          FROM keyword k
-          WHERE k.policy_id = p.policy_id AND k.keyword = $${paramIndex}
-        )
-      )`);
-    values.push(sanitizedSearchTerm);
+      p.policy_name ILIKE '%' || $${paramIndex} || '%'
+      OR p.nickname ILIKE '%' || $${paramIndex} || '%'
+      OR EXISTS (
+        SELECT 1
+        FROM category c
+        WHERE c.policy_id = p.policy_id
+        AND c.category ILIKE '%' || $${paramIndex} || '%'
+      )
+    )`);
+    values.push(searchTerm); // Push searchTerm only once
     paramIndex++;
   }
+  
 
   if (selectedState) {
     filters.push(`p.state_name = $${paramIndex}`);
@@ -51,122 +53,115 @@ router.get("/", async (req, res) => {
   }
 
   if (selectedCategory) {
-    filters.push(`EXISTS (
-          SELECT 1
-          FROM category c
-          WHERE c.policy_id = p.policy_id AND c.category = $${paramIndex}
-        )`);
+    filters.push(`
+      EXISTS (
+        SELECT 1
+        FROM category c
+        WHERE c.policy_id = p.policy_id AND c.category = $${paramIndex}
+      )
+    `);
     values.push(selectedCategory);
     paramIndex++;
   }
 
-  const parentPoliciesQuery = `
-  SELECT 
-    p.policy_id, 
-    p.policy_name, 
-    p.nickname,
-    p.effective_date, 
-    p.expiration_date,
-    p.og_file_path,
-    ARRAY_AGG(DISTINCT c.category) AS categories,
-    ARRAY_AGG(DISTINCT pr.program) AS programs
-  FROM 
-    policy p
-  LEFT JOIN 
-    category c ON p.policy_id = c.policy_id
-  LEFT JOIN
-    program pr ON p.policy_id = pr.policy_id
-  ${filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : ""}
-  ${filters.length > 0 ? "AND" : filters.length === 0 ? "WHERE" : ""}
-  p.parent_policy_id IS NULL
-  GROUP BY 
-    p.policy_id
-  ORDER BY 
-    p.nickname ASC, p.policy_name ASC
-  LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-`;
+  const query = `
+    WITH matching_policies AS (
+      SELECT
+        p.policy_id,
+        COALESCE(p.parent_policy_id, p.policy_id) AS root_policy_id
+      FROM policy p
+      ${filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : ""}
+    ),
+    policies_with_children AS (
+      SELECT
+        parent.policy_id AS parent_id,
+        parent.policy_name AS parent_name,
+        parent.nickname AS parent_nickname,
+        parent.effective_date AS parent_effective_date,
+        parent.expiration_date AS parent_expiration_date,
+        ARRAY_AGG(DISTINCT c.category) FILTER (WHERE c.category IS NOT NULL) AS parent_categories,
+        ARRAY_AGG(DISTINCT pr.program) FILTER (WHERE pr.program IS NOT NULL) AS parent_programs,
+        child.policy_id AS child_id,
+        child.policy_name AS child_name,
+        child.nickname AS child_nickname,
+        child.effective_date AS child_effective_date,
+        child.expiration_date AS child_expiration_date,
+        ARRAY_AGG(DISTINCT cc.category) FILTER (WHERE cc.category IS NOT NULL) AS child_categories,
+        ARRAY_AGG(DISTINCT cp.program) FILTER (WHERE cp.program IS NOT NULL) AS child_programs
+      FROM matching_policies mp
+      JOIN policy parent ON parent.policy_id = mp.root_policy_id
+      LEFT JOIN policy child ON child.parent_policy_id = parent.policy_id
+      LEFT JOIN category c ON parent.policy_id = c.policy_id
+      LEFT JOIN program pr ON parent.policy_id = pr.policy_id
+      LEFT JOIN category cc ON child.policy_id = cc.policy_id
+      LEFT JOIN program cp ON child.policy_id = cp.policy_id
+      GROUP BY parent.policy_id, child.policy_id
+    )
+    SELECT DISTINCT 
+      parent_id, 
+      parent_name, 
+      parent_nickname, 
+      parent_effective_date, 
+      parent_expiration_date, 
+      parent_categories, 
+      parent_programs, 
+      child_id, 
+      child_name, 
+      child_nickname, 
+      child_effective_date, 
+      child_expiration_date, 
+      child_categories, 
+      child_programs
+    FROM policies_with_children
+    ORDER BY parent_id, child_id NULLS LAST
+    LIMIT $${paramIndex} OFFSET $${paramIndex + 1};
+  `;
 
   values.push(limit, offset);
 
   try {
-    const parentPolicies = await db.query(parentPoliciesQuery, values);
+    const result = await db.query(query, values);
 
-    if (parentPolicies.rows.length === 0) {
-      return res.json({
-        policies: [],
-        totalPages: 0,
-        hasNextPage: false,
-      });
-    }
+    const policiesMap = new Map();
 
-    const parentPolicyIds = parentPolicies.rows.map(
-      (policy) => policy.policy_id
-    );
+    // Group parent and child policies
+    result.rows.forEach((row) => {
+      if (!policiesMap.has(row.parent_id)) {
+        policiesMap.set(row.parent_id, {
+          policy_id: row.parent_id,
+          policy_name: row.parent_name,
+          nickname: row.parent_nickname,
+          effective_date: row.parent_effective_date,
+          expiration_date: row.parent_expiration_date,
+          categories: row.parent_categories || [],
+          programs: row.parent_programs || [],
+          children: [],
+        });
+      }
 
-    const childrenPoliciesQuery = `
-      SELECT 
-        p.policy_id, 
-        p.policy_name, 
-        p.effective_date, 
-        p.expiration_date,
-        p.og_file_path,
-        p.parent_policy_id,
-        ARRAY_AGG(DISTINCT c.category) AS categories,
-        ARRAY_AGG(DISTINCT pr.program) AS programs
-      FROM 
-        policy p
-      LEFT JOIN 
-        category c ON p.policy_id = c.policy_id
-      LEFT JOIN
-        program pr ON p.policy_id = pr.policy_id
-      WHERE 
-        p.parent_policy_id = ANY($1::int[])
-      GROUP BY 
-        p.policy_id, p.parent_policy_id
-      ORDER BY 
-        p.parent_policy_id ASC, p.effective_date ASC
-    `;
+      if (row.child_id) {
+        policiesMap.get(row.parent_id).children.push({
+          policy_id: row.child_id,
+          policy_name: row.child_name,
+          nickname: row.child_nickname,
+          effective_date: row.child_effective_date,
+          expiration_date: row.child_expiration_date,
+          categories: row.child_categories || [],
+          programs: row.child_programs || [],
+        });
+      }
+    });
 
-    const childrenPolicies = await db.query(childrenPoliciesQuery, [
-      parentPolicyIds,
-    ]);
-
-    const childrenByParent = childrenPolicies.rows.reduce((acc, child) => {
-      if (!acc[child.parent_policy_id]) acc[child.parent_policy_id] = [];
-      acc[child.parent_policy_id].push(child);
-      return acc;
-    }, {});
-
-    const policiesWithChildren = parentPolicies.rows.map((parent) => ({
-      ...parent,
-      children: childrenByParent[parent.policy_id] || [],
-    }));
-
-    const countQuery = `
-      SELECT COUNT(*) AS total
-      FROM policy p
-      ${filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : ""}
-      ${filters.length > 0 ? "AND" : filters.length === 0 ? "WHERE" : ""}
-      p.parent_policy_id IS NULL
-    `;
-
-    const countResult = await db.query(countQuery, values.slice(0, -2));
-    const totalParentPolicies = parseInt(countResult.rows[0].total, 10);
-
-    const totalPages = Math.ceil(totalParentPolicies / limit);
-    const hasNextPage = offset + limit < totalParentPolicies;
+    const policies = Array.from(policiesMap.values());
 
     res.json({
-      policies: policiesWithChildren,
-      totalPages: totalPages,
-      hasNextPage,
+      policies,
+      totalPages: Math.ceil(policies.length / limit),
+      hasNextPage: offset + limit < policies.length,
     });
   } catch (error) {
-    console.error("Database error: ", error);
-    res.status(500).json({
-      message: "Error fetching policies",
-      error: error.message,
-    });
+    console.error("Database error:", error);
+    res.status(500).json({ message: "Error fetching policies", error });
   }
 });
 
