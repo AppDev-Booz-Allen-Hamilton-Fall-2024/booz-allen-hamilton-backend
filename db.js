@@ -2,10 +2,10 @@ const { Pool } = require('pg');
 
 // Create a new pool instance
 const pool = new Pool({
-  user: 'buenosnachos',      
+  user: 'sohamkatdare',      
   host: 'localhost',         
   database: 'adc', 
-  password: '12345',
+  password: '1234',
   port: 5432,                  
 });
 
