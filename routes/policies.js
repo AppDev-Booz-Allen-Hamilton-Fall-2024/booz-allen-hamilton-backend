@@ -171,7 +171,7 @@ router.get(`/:policyId/get`, async (req, res) => {
     console.log(Number(policyId));
 
     const result = await db.query(
-      "SELECT policy_name, effective_date, og_file_path FROM policy WHERE policy_id = $1",
+      "SELECT policy_name, nickname, effective_date, og_file_path, annotations, policy_id FROM policy WHERE policy_id = $1",
       [policyId]
     );
 
@@ -183,6 +183,9 @@ router.get(`/:policyId/get`, async (req, res) => {
       name: result.rows[0].policy_name,
       date: result.rows[0].effective_date,
       filePath: result.rows[0].og_file_path,
+      nickname: result.rows[0].nickname,
+      annotations: result.rows[0].annotations,
+      policyId: result.rows[0].policy_id
     });
   } catch (error) {
     console.error("Database error: ", error);
