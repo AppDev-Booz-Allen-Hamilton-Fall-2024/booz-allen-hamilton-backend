@@ -32,7 +32,6 @@ router.get("/", async (req, res) => {
     values.push(searchTerm); // Push searchTerm only once
     paramIndex++;
   }
-  
 
   if (selectedState) {
     filters.push(`p.state_name = $${paramIndex}`);
@@ -79,6 +78,7 @@ router.get("/", async (req, res) => {
         parent.nickname AS parent_nickname,
         parent.effective_date AS parent_effective_date,
         parent.expiration_date AS parent_expiration_date,
+        parent.og_file_path AS parent_og_file_path,
         ARRAY_AGG(DISTINCT c.category) FILTER (WHERE c.category IS NOT NULL) AS parent_categories,
         ARRAY_AGG(DISTINCT pr.program) FILTER (WHERE pr.program IS NOT NULL) AS parent_programs,
         child.policy_id AS child_id,
@@ -86,6 +86,7 @@ router.get("/", async (req, res) => {
         child.nickname AS child_nickname,
         child.effective_date AS child_effective_date,
         child.expiration_date AS child_expiration_date,
+        child.og_file_path AS child_og_file_path,
         ARRAY_AGG(DISTINCT cc.category) FILTER (WHERE cc.category IS NOT NULL) AS child_categories,
         ARRAY_AGG(DISTINCT cp.program) FILTER (WHERE cp.program IS NOT NULL) AS child_programs
       FROM matching_policies mp
@@ -103,6 +104,7 @@ router.get("/", async (req, res) => {
       parent_nickname, 
       parent_effective_date, 
       parent_expiration_date, 
+      parent_og_file_path,
       parent_categories, 
       parent_programs, 
       child_id, 
@@ -110,6 +112,7 @@ router.get("/", async (req, res) => {
       child_nickname, 
       child_effective_date, 
       child_expiration_date, 
+      child_og_file_path,
       child_categories, 
       child_programs
     FROM policies_with_children
@@ -135,6 +138,7 @@ router.get("/", async (req, res) => {
           expiration_date: row.parent_expiration_date,
           categories: row.parent_categories || [],
           programs: row.parent_programs || [],
+          og_file_path: row.parent_og_file_path,
           children: [],
         });
       }
@@ -147,6 +151,7 @@ router.get("/", async (req, res) => {
           effective_date: row.child_effective_date,
           expiration_date: row.child_expiration_date,
           categories: row.child_categories || [],
+          og_file_path: row.child_og_file_path,
           programs: row.child_programs || [],
         });
       }
@@ -185,7 +190,7 @@ router.get(`/:policyId/get`, async (req, res) => {
       filePath: result.rows[0].og_file_path,
       nickname: result.rows[0].nickname,
       annotations: result.rows[0].annotations,
-      policyId: result.rows[0].policy_id
+      policyId: result.rows[0].policy_id,
     });
   } catch (error) {
     console.error("Database error: ", error);
