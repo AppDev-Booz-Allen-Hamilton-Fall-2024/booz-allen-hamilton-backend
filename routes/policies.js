@@ -255,15 +255,13 @@ router.get(`/:policyId/children`, async (req, res) => {
   }
 });
 
-router.post("/:policyId/annotate", async (req, res) => {
+router.post("/:policyId/annotate/:annotations", async (req, res) => {
   try {
-    const { policyId } = req.params;
-    const { annotations } = req.body
-    await db.query(
+    const { policyId, annotations } = req.params;
+    const result = db.query(
       "UPDATE policy SET annotations = $2 WHERE policy_id = $1",
       [policyId, annotations]
     );
-    res.status(200).json({ message: "Annotations updated successfully" });
   } catch (error) {
     console.error("Database error: ", error);
     res.status(500).json({
